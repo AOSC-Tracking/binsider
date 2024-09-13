@@ -1,4 +1,11 @@
-use crate::{error::Result, tracer::TraceData};
+use crate::error::Result;
+#[cfg(any(
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "riscv64"
+))]
+use crate::tracer::TraceData;
+
 use ratatui::crossterm::event::{self, Event as CrosstermEvent, KeyEvent, MouseEvent};
 use std::path::PathBuf;
 use std::sync::{
@@ -21,8 +28,18 @@ pub enum Event {
     Resize(u16, u16),
     /// Result of `strings` call.
     FileStrings(Result<Vec<(String, u64)>>),
+    #[cfg(any(
+        target_arch = "x86_64",
+        target_arch = "aarch64",
+        target_arch = "riscv64"
+    ))]
     /// Trace system calls.
     Trace,
+    #[cfg(any(
+        target_arch = "x86_64",
+        target_arch = "aarch64",
+        target_arch = "riscv64"
+    ))]
     /// Results of tracer.
     TraceResult(Result<TraceData>),
     /// Restart TUI with a new path.

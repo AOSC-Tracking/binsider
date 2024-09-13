@@ -19,6 +19,11 @@ pub mod args;
 /// Error handler implementation.
 pub mod error;
 
+#[cfg(any(
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "riscv64"
+))]
 /// System call tracer.
 pub mod tracer;
 
@@ -34,6 +39,11 @@ use prelude::*;
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 use std::{env, fs, io};
+#[cfg(any(
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "riscv64"
+))]
 use tracer::TraceData;
 use tui::{state::State, ui::Tab, Tui};
 
@@ -101,11 +111,21 @@ pub fn start_tui(analyzer: Analyzer, args: Args) -> Result<()> {
                     state.handle_tab()?;
                 }
             }
+            #[cfg(any(
+                target_arch = "x86_64",
+                target_arch = "aarch64",
+                target_arch = "riscv64"
+            ))]
             Event::Trace => {
                 state.system_calls_loaded = false;
                 tui.toggle_pause()?;
                 tracer::trace_syscalls(state.analyzer.file.path, tui.events.sender.clone());
             }
+            #[cfg(any(
+                target_arch = "x86_64",
+                target_arch = "aarch64",
+                target_arch = "riscv64"
+            ))]
             Event::TraceResult(syscalls) => {
                 state.analyzer.tracer = match syscalls {
                     Ok(v) => v,

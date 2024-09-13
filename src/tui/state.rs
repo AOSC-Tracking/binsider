@@ -7,6 +7,11 @@ use crate::tui::command::*;
 use crate::tui::event::Event;
 use crate::tui::ui::{Tab, ELF_INFO_TABS, MAIN_TABS};
 use crate::tui::widgets::SelectableList;
+#[cfg(any(
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "riscv64"
+))]
 use ansi_to_tui::IntoText;
 use heh::windows::Window;
 use tui_input::backend::crossterm::EventHandler;
@@ -85,11 +90,21 @@ impl<'a> State<'a> {
                 match command {
                     InputCommand::Handle(event) => {
                         self.input.handle_event(&event);
+                        #[cfg(any(
+                            target_arch = "x86_64",
+                            target_arch = "aarch64",
+                            target_arch = "riscv64"
+                        ))]
                         if self.tab == Tab::DynamicAnalysis {
                             self.dynamic_scroll_index = 0;
                         }
                     }
                     InputCommand::Enter => {
+                        #[cfg(any(
+                            target_arch = "x86_64",
+                            target_arch = "aarch64",
+                            target_arch = "riscv64"
+                        ))]
                         if self.tab != Tab::DynamicAnalysis || self.system_calls_loaded {
                             self.input_mode = true;
                         }
@@ -166,6 +181,27 @@ impl<'a> State<'a> {
                 }
             },
             Command::ShowDetails => {
+                #[cfg(not(any(
+                    target_arch = "x86_64",
+                    target_arch = "aarch64",
+                    target_arch = "riscv64"
+                )))]
+                if self.tab == Tab::General {
+                    if let Some(path) = self.list.selected().map(|v| PathBuf::from(v[1].clone())) {
+                        event_sender
+                            .send(Event::Restart(Some(path)))
+                            .expect("failed to send trace event");
+                    }
+                    return Ok(());
+                } else {
+                    self.show_details = !self.show_details;
+                }
+
+                #[cfg(any(
+                    target_arch = "x86_64",
+                    target_arch = "aarch64",
+                    target_arch = "riscv64"
+                ))]
                 if self.tab == Tab::General {
                     if let Some(path) = self.list.selected().map(|v| PathBuf::from(v[1].clone())) {
                         event_sender
@@ -187,6 +223,11 @@ impl<'a> State<'a> {
                     webbrowser::open(env!("CARGO_PKG_HOMEPAGE"))?;
                 }
             }
+            #[cfg(any(
+                target_arch = "x86_64",
+                target_arch = "aarch64",
+                target_arch = "riscv64"
+            ))]
             Command::TraceCalls => {
                 event_sender
                     .send(Event::Trace)
@@ -210,10 +251,36 @@ impl<'a> State<'a> {
                     }
                 }
                 ScrollType::List => {
+                    #[cfg(any(
+                        target_arch = "x86_64",
+                        target_arch = "aarch64",
+                        target_arch = "riscv64"
+                    ))]
                     if self.tab == Tab::DynamicAnalysis {
                         self.dynamic_scroll_index =
                             self.dynamic_scroll_index.saturating_add(amount);
                     } else if self.tab == Tab::StaticAnalysis {
+                        match self.block_index {
+                            0 => {
+                                self.headers_scroll_index =
+                                    self.headers_scroll_index.saturating_add(amount);
+                            }
+                            1 => {
+                                self.notes_scroll_index =
+                                    self.notes_scroll_index.saturating_add(amount);
+                            }
+                            _ => self.list.next(amount),
+                        }
+                    } else {
+                        self.list.next(amount)
+                    }
+
+                    #[cfg(not(any(
+                        target_arch = "x86_64",
+                        target_arch = "aarch64",
+                        target_arch = "riscv64"
+                    )))]
+                    if self.tab == Tab::StaticAnalysis {
                         match self.block_index {
                             0 => {
                                 self.headers_scroll_index =
@@ -252,10 +319,36 @@ impl<'a> State<'a> {
                     }
                 }
                 ScrollType::List => {
+                    #[cfg(any(
+                        target_arch = "x86_64",
+                        target_arch = "aarch64",
+                        target_arch = "riscv64"
+                    ))]
                     if self.tab == Tab::DynamicAnalysis {
                         self.dynamic_scroll_index =
                             self.dynamic_scroll_index.saturating_sub(amount);
                     } else if self.tab == Tab::StaticAnalysis {
+                        match self.block_index {
+                            0 => {
+                                self.headers_scroll_index =
+                                    self.headers_scroll_index.saturating_sub(amount);
+                            }
+                            1 => {
+                                self.notes_scroll_index =
+                                    self.notes_scroll_index.saturating_sub(amount);
+                            }
+                            _ => self.list.previous(amount),
+                        }
+                    } else {
+                        self.list.previous(amount)
+                    }
+
+                    #[cfg(not(any(
+                        target_arch = "x86_64",
+                        target_arch = "aarch64",
+                        target_arch = "riscv64"
+                    )))]
+                    if self.tab == Tab::StaticAnalysis {
                         match self.block_index {
                             0 => {
                                 self.headers_scroll_index =
@@ -278,13 +371,30 @@ impl<'a> State<'a> {
                 }
             },
             Command::Top => {
+                #[cfg(any(
+                    target_arch = "x86_64",
+                    target_arch = "aarch64",
+                    target_arch = "riscv64"
+                ))]
                 if self.tab == Tab::DynamicAnalysis {
                     self.dynamic_scroll_index = 0;
                 } else {
                     self.list.first();
                 }
+
+                #[cfg(not(any(
+                    target_arch = "x86_64",
+                    target_arch = "aarch64",
+                    target_arch = "riscv64"
+                )))]
+                self.list.first();
             }
             Command::Bottom => {
+                #[cfg(any(
+                    target_arch = "x86_64",
+                    target_arch = "aarch64",
+                    target_arch = "riscv64"
+                ))]
                 if self.tab == Tab::DynamicAnalysis {
                     self.dynamic_scroll_index = self
                         .analyzer
@@ -297,6 +407,12 @@ impl<'a> State<'a> {
                 } else {
                     self.list.last();
                 }
+                #[cfg(not(any(
+                    target_arch = "x86_64",
+                    target_arch = "aarch64",
+                    target_arch = "riscv64"
+                )))]
+                self.list.last();
             }
             Command::Increment => {
                 if self.tab == Tab::Strings {
@@ -369,6 +485,11 @@ impl<'a> State<'a> {
                         .collect(),
                 );
             }
+            #[cfg(any(
+                target_arch = "x86_64",
+                target_arch = "aarch64",
+                target_arch = "riscv64"
+            ))]
             Tab::DynamicAnalysis => {
                 self.analyzer.system_calls = self
                     .analyzer
@@ -435,6 +556,11 @@ impl<'a> State<'a> {
                 ("Tab", "Next"),
                 ("q", "Quit"),
             ],
+            #[cfg(any(
+                target_arch = "x86_64",
+                target_arch = "aarch64",
+                target_arch = "riscv64"
+            ))]
             Tab::DynamicAnalysis => {
                 if self.system_calls_loaded {
                     vec![

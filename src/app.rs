@@ -1,8 +1,13 @@
+#[cfg(any(
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "riscv64"
+))]
+use crate::tracer::TraceData;
 use crate::{
     elf::Elf,
     error::{Error, Result},
     file::FileInfo,
-    tracer::TraceData,
     tui::event::Event,
 };
 use elf::{endian::AnyEndian, ElfBytes};
@@ -32,6 +37,11 @@ pub struct Analyzer<'a> {
     pub strings_len: usize,
     /// Heh application.
     pub heh: Heh,
+    #[cfg(any(
+        target_arch = "x86_64",
+        target_arch = "aarch64",
+        target_arch = "riscv64"
+    ))]
     /// Tracer data.
     pub tracer: TraceData,
     /// System calls.
@@ -67,6 +77,11 @@ impl<'a> Analyzer<'a> {
             strings: None,
             strings_len,
             heh,
+            #[cfg(any(
+                target_arch = "x86_64",
+                target_arch = "aarch64",
+                target_arch = "riscv64"
+            ))]
             tracer: TraceData::default(),
             system_calls: Vec::new(),
             dependencies,

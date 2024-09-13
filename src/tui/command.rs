@@ -39,6 +39,11 @@ pub enum Command {
     Input(InputCommand),
     /// Hexdump command.
     Hexdump(HexdumpCommand),
+    #[cfg(any(
+        target_arch = "x86_64",
+        target_arch = "aarch64",
+        target_arch = "riscv64"
+    ))]
     /// Trace system calls.
     TraceCalls,
     /// Exit application.
@@ -96,6 +101,11 @@ impl From<KeyEvent> for Command {
             KeyCode::Backspace => Self::Input(InputCommand::Resume(Event::Key(key_event))),
             KeyCode::Enter => Self::ShowDetails,
             KeyCode::Char('o') => Self::OpenRepo,
+            #[cfg(any(
+                target_arch = "x86_64",
+                target_arch = "aarch64",
+                target_arch = "riscv64"
+            ))]
             KeyCode::Char('r') => Self::TraceCalls,
             _ => Self::Nothing,
         }

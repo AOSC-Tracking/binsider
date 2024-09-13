@@ -1,4 +1,9 @@
 use crate::{elf::Info, tui::state::State};
+#[cfg(any(
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "riscv64"
+))]
 use ansi_to_tui::IntoText;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Margin, Position, Rect},
@@ -34,7 +39,29 @@ pub const ELF_INFO_TABS: &[Info] = &[
     Info::Relocations,
 ];
 
+#[cfg(not(any(
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "riscv64"
+)))]
 /// Application tab.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Tab {
+    /// General information.
+    General = 0,
+    /// Static analysis.
+    StaticAnalysis = 1,
+    /// String.
+    Strings = 2,
+    /// Hexdump.
+    Hexdump = 3,
+}
+
+#[cfg(any(
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "riscv64"
+))]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Tab {
     /// General information.
@@ -58,10 +85,26 @@ impl Default for Tab {
 impl Tab {
     /// Returns the available tabs.
     const fn get_headers() -> &'static [&'static str] {
-        &["General", "Static", "Dynamic", "Strings", "Hexdump"]
+        &[
+            "General",
+            "Static",
+            #[cfg(any(
+                target_arch = "x86_64",
+                target_arch = "aarch64",
+                target_arch = "riscv64"
+            ))]
+            "Dynamic",
+            "Strings",
+            "Hexdump",
+        ]
     }
 }
 
+#[cfg(any(
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "riscv64"
+))]
 impl From<usize> for Tab {
     fn from(v: usize) -> Self {
         match v {
@@ -70,6 +113,23 @@ impl From<usize> for Tab {
             2 => Self::DynamicAnalysis,
             3 => Self::Strings,
             4 => Self::Hexdump,
+            _ => Self::default(),
+        }
+    }
+}
+
+#[cfg(not(any(
+    target_arch = "x86_64",
+    target_arch = "aarch64",
+    target_arch = "riscv64"
+)))]
+impl From<usize> for Tab {
+    fn from(v: usize) -> Self {
+        match v {
+            0 => Self::General,
+            1 => Self::StaticAnalysis,
+            2 => Self::Strings,
+            3 => Self::Hexdump,
             _ => Self::default(),
         }
     }
@@ -140,6 +200,11 @@ pub fn render(state: &mut State, frame: &mut Frame) {
         Tab::StaticAnalysis => {
             render_static_analysis(state, frame, chunks[1]);
         }
+        #[cfg(any(
+            target_arch = "x86_64",
+            target_arch = "aarch64",
+            target_arch = "riscv64"
+        ))]
         Tab::DynamicAnalysis => {
             render_dynamic_analysis(state, frame, chunks[1]);
         }
@@ -974,6 +1039,11 @@ pub fn render_dynamic_analysis(state: &mut State, frame: &mut Frame, rect: Rect)
             &mut ScrollbarState::new(max_height).position(state.dynamic_scroll_index),
         );
 
+        #[cfg(any(
+            target_arch = "x86_64",
+            target_arch = "aarch64",
+            target_arch = "riscv64"
+        ))]
         if state.show_details && !state.analyzer.tracer.summary.is_empty() {
             let summary = state
                 .analyzer

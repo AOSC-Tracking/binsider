@@ -30,7 +30,6 @@ tui-input = "0.10.1"
 tui-popup = "0.5.0"
 unicode-width = "0.1.11"
 textwrap = "0.16.1"
-lurk-cli = { git = "https://github.com/JakWai01/lurk", rev = "f28e066dc5da831d2b3db66eb43d4677864d0c54" }
 nix = { version = "0.29.0", features = ["ptrace", "signal"] }
 ansi-to-tui = "6.0.0"
 console = "0.15.8"
@@ -43,6 +42,10 @@ sysinfo = { version = "0.31.4", default-features = false, features = ["user"] }
 webbrowser = "1.0.1"
 lddtree = "0.3.5"
 itertools = "0.13.0"
+
+
+[target.'cfg(any(target_arch = "x86_64", target_arch = "aarch64", target_arch="riscv64"))'.dependencies]
+lurk-cli = { git = "https://github.com/JakWai01/lurk", rev = "f28e066dc5da831d2b3db66eb43d4677864d0c54" }
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"
